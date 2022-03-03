@@ -3,7 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\Paste;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -19,34 +22,6 @@ class PasteRepository extends ServiceEntityRepository
         parent::__construct($registry, Paste::class);
     }
 
-    // /**
-    //  * @return Paste[] Returns an array of Paste objects
-    //  */
-    /*
-    public function findByExampleField($value)
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('p.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?Paste
-    {
-        return $this->createQueryBuilder('p')
-            ->andWhere('p.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-    */
     public function findByUrl(string $url): ?Paste
     {
         $result = $this->createQueryBuilder('p')
@@ -64,6 +39,26 @@ class PasteRepository extends ServiceEntityRepository
         }
     }
 
+    public function findByUrlAndUser(string $url, User $user): ?Paste
+    {
+        $result = $this->createQueryBuilder('p')
+            ->andWhere('p.url = :url')
+            ->setParameter('url', $url)
+            ->andWhere('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.id', 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getResult()
+        ;
+        if ($result) {
+            return $result[0];
+        } else {
+            return null;
+        }
+    }
+
+
     public function getRandomUrl()
     {
 
@@ -75,4 +70,17 @@ class PasteRepository extends ServiceEntityRepository
         }
         return $url;
     }
+
+    /**
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function add(Paste $entity, bool $flush = true): void
+    {
+        $this->_em->persist($entity);
+        if ($flush) {
+            $this->_em->flush();
+        }
+    }
+
 }

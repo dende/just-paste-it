@@ -27,6 +27,17 @@ class Paste
      */
     private $content;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="pastes")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $user;
+
+    /**
+     * @ORM\Column(type="string", length=20)
+     */
+    private $nonce;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -52,6 +63,30 @@ class Paste
     public function setContent(string $content): self
     {
         $this->content = $content;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function getNonce(): ?string
+    {
+        return $this->nonce;
+    }
+
+    public function setNonce(string $nonce): self
+    {
+        $this->nonce = $nonce;
 
         return $this;
     }

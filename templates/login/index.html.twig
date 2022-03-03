@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+<style>
+    body {
+        background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+    }
+
+    .login {
+        width: 360px;
+        padding: 8% 0 0;
+        margin: auto;
+        font-family: 'Arial', sans-serif;
+    }
+
+    .form {
+        position: relative;
+        z-index: 1;
+        background: #FFFFFF;
+        border-radius: 10px;
+        max-width: 360px;
+        margin: 0 auto 100px;
+        padding: 45px;
+        text-align: center;
+    }
+
+    .form input {
+        outline: 0;
+        background: #f2f2f2;
+        width: 100%;
+        border: 0;
+        border-radius: 5px;
+        margin: 0 0 15px;
+        padding: 15px;
+        box-sizing: border-box;
+        font-size: 14px;
+    }
+
+    .form input:focus {
+        background: #dbdbdb;
+    }
+
+    .form button {
+        text-transform: uppercase;
+        outline: 0;
+        background: #4b6cb7;
+        width: 100%;
+        border: 0;
+        border-radius: 5px;
+        padding: 15px;
+        color: #FFFFFF;
+        font-size: 14px;
+        -webkit-transition: all 0.3 ease;
+        transition: all 0.3 ease;
+        cursor: pointer;
+    }
+
+    .form button:active {
+        background: #395591;
+    }
+
+    .form span {
+        font-size: 75px;
+        color: #4b6cb7;
+    }
+
+    .error {
+        width: 400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        padding: 1em;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+    {% if error %}
+        <div class="error">
+            <div class="error-type">Error:</div>
+            <div class="error-content">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+        </div>
+    {% endif %}
+    <div class="login">
+        <div class="form">
+            <form action="{{ path('login') }}" class="login-form" method="post">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" style="fill:#4b6cb7;padding-bottom:2em;margin:0 auto;display: block;width:100px"><title>Lock SVG icon</title><path d="M775.6,408.1V285.6C775.6,133.4,652.2,10,500,10c-152.2,0-275.6,123.4-275.6,275.6v122.5c-50.8,0-91.9,41.1-91.9,91.9v91.9v30.6v61.3v30.6c0,152.2,123.4,275.6,275.6,275.6h183.8c152.2,0,275.6-123.4,275.6-275.6v-30.6v-61.3v-30.6V500C867.5,449.3,826.3,408.1,775.6,408.1z M285.6,285.6c0-118.4,96-214.4,214.4-214.4c118.4,0,214.4,96,214.4,214.4v122.5h-61.3V285.7c0-84.6-68.6-153.1-153.1-153.1c-84.6,0-153.1,68.5-153.1,153.1v122.4h-61.2V285.6z M622.5,285.6L622.5,285.6v122.5h-245V285.7v-0.1c0-67.6,54.9-122.5,122.5-122.5C567.7,163.1,622.5,218,622.5,285.6z M806.2,591.9v30.6v61.3v30.6c0,118.2-96.2,214.4-214.4,214.4H408.1c-118.2,0-214.4-96.2-214.4-214.4v-30.6v-61.3v-30.6V500c0-16.9,13.7-30.6,30.6-30.6c20.4,0,40.8,0,61.3,0h428.8c20.4,0,40.8,0,61.3,0c16.9,0,30.6,13.7,30.6,30.6V591.9z"></path><path d="M500,591.9c-33.8,0-61.2,27.4-61.2,61.3c0,18.6,10.2,53.9,20.4,81.8c8.4,22.7,18.8,40.6,40.8,40.6c23.9,0,32.5-17.7,40.8-40.4c10.3-28,20.4-63.4,20.4-82.1C561.3,619.3,533.8,591.9,500,591.9z"></path></svg>
+                <label for="username">User:</label>
+                <input type="text" id="username" name="_username" value="{{ last_username }}"/>
+
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="_password"/>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                <button type="submit">login</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
