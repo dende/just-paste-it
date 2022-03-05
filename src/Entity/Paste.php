@@ -38,6 +38,11 @@ class Paste
      */
     private $nonce;
 
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    private $public;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -87,6 +92,18 @@ class Paste
     public function setNonce(string $nonce): self
     {
         $this->nonce = $nonce;
+
+        return $this;
+    }
+
+    public function getPublic(): ?bool
+    {
+        return $this->public;
+    }
+
+    public function setPublic(bool $public): self
+    {
+        $this->public = $public;
 
         return $this;
     }

@@ -16,25 +16,31 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 #[IsGranted('ROLE_USER')]
 class PasteController extends AbstractController
 {
-    #[Route('/', name: 'paste', methods: ['GET'])]
+    #[Route('/', name: 'paste.index', methods: ['GET'])]
     public function index(#[CurrentUser] ?User $user): Response
     {
+        return $this->redirectToRoute('paste.create');
+    }
+
+    #[Route('/create', name: 'paste.create', methods: ['GET'])]
+    public function create(#[CurrentUser] ?User $user): Response
+    {
         return $this->render(
-            'paste/index.html.twig',
+            'paste/create.html.twig',
             ['user' => $user],
         );
     }
 
-    #[Route('/', name: 'create_paste', methods: ['POST'])]
-    public function create(Request $request, #[CurrentUser] ?User $user, PasteRepository $pasteRepository, EntityManagerInterface $entityManager): Response
+    #[Route('/', name: 'paste.store', methods: ['POST'])]
+    public function store(Request $request, #[CurrentUser] ?User $user, PasteRepository $pasteRepository, EntityManagerInterface $entityManager): Response
     {
         $content = $request->request->get('content');
         $url = $request->request->get('url');
         if (empty($content)) {
             if (!empty($url)) {
-                return $this->redirectToRoute("show_paste", ['url' => $url]);
+                return $this->redirectToRoute("paste.show", ['url' => $url]);
             }
-            return $this->redirectToRoute("paste");
+            return $this->redirectToRoute("paste.index");
         }
 
         if ($url) {
@@ -57,15 +63,15 @@ class PasteController extends AbstractController
         // actually executes the queries (i.e. the INSERT query)
         $entityManager->flush();
 
-        return $this->redirectToRoute("show_paste", ["url" => $paste->getUrl()]);
+        return $this->redirectToRoute("paste.show", ["url" => $paste->getUrl()]);
     }
 
-    #[Route('/{url}', name: 'show_paste', methods: ['GET'])]
+    #[Route('/{url}', name: 'paste.show', methods: ['GET'])]
     public function show(string $url, #[CurrentUser] ?User $user, PasteRepository $pasteRepository, Request $request): Response
     {
         $paste = $pasteRepository->findByUrlAndUser($url, $user);
         if (empty($paste)) {
-            return $this->redirectToRoute("paste");
+            return $this->redirectToRoute("paste.index");
         }
 
         $session = $request->getSession();
