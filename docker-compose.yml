@@ -1,0 +1,8 @@
+version: '2'
+services:
+  just-paste-it:
+    build: docker
+    volumes:
+      - ./:/var/www/
+    ports:
+      - "80:80"
