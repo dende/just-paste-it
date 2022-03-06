@@ -3,7 +3,11 @@
 namespace App\Service;
 
 use App\Entity\User;
+use App\Exception\UserCreationFailedException;
 use App\Repository\UserRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\Exception\ORMException;
+use SodiumException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserService {
@@ -17,6 +21,11 @@ class UserService {
         $this->passwordHasher = $passwordHasher;
     }
 
+    /**
+     * @throws SodiumException
+     * @throws UserCreationFailedException
+     * @throws ORMException
+     */
     public function createUser(string $username, string $plaintextPassword)
     {
 
@@ -35,7 +44,7 @@ class UserService {
             $encryptedEncryptionKey = \sodium_crypto_aead_aes256gcm_encrypt($generated_key, null, $encryptionKeyNonce, $keyDerivedFromPassword);
 
         } else {
-            // do some other bullshit crypto
+            dd(openssl_get_cipher_methods());
         }
 
 
@@ -56,7 +65,7 @@ class UserService {
         try {
             $this->userRepository->add($user);
         } catch (OptimisticLockException $e) {
-            $output->writeln("Something went wrong while adding the user");
+            throw new UserCreationFailedException();
         }
 
     }
