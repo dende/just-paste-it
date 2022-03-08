@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Paste;
 use App\Entity\User;
 use App\Repository\PasteRepository;
+use App\Service\Encryption;
 use Doctrine\ORM\EntityManagerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,6 +17,14 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 #[IsGranted('ROLE_USER')]
 class PasteController extends AbstractController
 {
+
+    private Encryption $encryption;
+
+    public function __construct(Encryption $encryption)
+    {
+        $this->encryption = $encryption;
+    }
+
     #[Route('/', name: 'paste.index', methods: ['GET'])]
     public function index(#[CurrentUser] ?User $user): Response
     {
@@ -52,11 +61,17 @@ class PasteController extends AbstractController
             $url = $pasteRepository->getRandomUrl();
         }
 
+        $session = $request->getSession();
+        $decryptedEncryptionKey = $session->get('decryptedEncryptionKey');
+
+
         $paste = new Paste();
         $paste->setUrl($url);
         $paste->setContent($content);
+        $paste = $this->encryption->encrypt($paste, $decryptedEncryptionKey);
 
         $paste->setUser($user);
+        $paste->setPublic(false);
 
         $entityManager->persist($paste);
         $entityManager->persist($user);
@@ -76,7 +91,7 @@ class PasteController extends AbstractController
 
         $session = $request->getSession();
         $decryptedEncryptionKey = $session->get('decryptedEncryptionKey');
-        $decryptedContent = \sodium_crypto_aead_aes256gcm_decrypt($paste->getContent(), null, $paste->getNonce(), $decryptedEncryptionKey);
+        $decryptedContent = $this->encryption->decrypt($paste, $decryptedEncryptionKey);
         $paste->setContent($decryptedContent);
         return $this->render('paste/show.html.twig',
             [

@@ -11,7 +11,7 @@
     </form>
 
     <h2>Neue Pastierung erstellen</h2>
-    <form method="post">
+    <form action="{{ path('paste.store') }}" method="post">
         <label for="url">Gewünschte URL:</label><br>
         <input id="url" name="url" type="text" placeholder="Wunsch-URL der Pasta"/>
         <label for="content">Pastierungsinhalt:</label><br>

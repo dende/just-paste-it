@@ -3,12 +3,19 @@
 
 namespace App\EventListener;
 
+use App\Service\Encryption;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Security\Http\Event\LoginSuccessEvent;
 use App\Entity\User;
 
 class LoginSubscriber implements EventSubscriberInterface
 {
+    private Encryption $encryption;
+
+    public function __construct(Encryption $encryption)
+    {
+        $this->encryption =  $encryption;
+    }
 
     public static function getSubscribedEvents(): array
     {
@@ -25,17 +32,7 @@ class LoginSubscriber implements EventSubscriberInterface
         $user = $event->getUser();
         $plaintextPassword = $event->getRequest()->get('_password');
 
-        $keyDerivedFromPassword = \sodium_crypto_pwhash(
-            32,
-            $plaintextPassword,
-            $user->getPasswordNonce(),
-            SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE,
-            SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE,
-            SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13
-        );
-
-
-        $decryptedEncryptionKey = \sodium_crypto_aead_aes256gcm_decrypt($user->getEncryptedEncryptionKey(), null, $user->getEncryptionKeyNonce(), $keyDerivedFromPassword);
+        $decryptedEncryptionKey = $this->encryption->decryptEncryptionkey($user, $plaintextPassword);
 
         $session = $event->getRequest()->getSession();
         $session->set('decryptedEncryptionKey', $decryptedEncryptionKey);
