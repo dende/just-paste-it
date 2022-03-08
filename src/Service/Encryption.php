@@ -19,19 +19,20 @@ class Encryption {
      * @throws Exception
      */
     public function generateEncryptionKey($plaintextPassword) {
-        if (sodium_crypto_aead_aes256gcm_is_available()) {
-            $encryptionKeyNonce = random_bytes(\SODIUM_CRYPTO_AEAD_AES256GCM_NPUBBYTES);
-            $passwordNonce = random_bytes(\SODIUM_CRYPTO_PWHASH_SALTBYTES);
-            $generated_key = sodium_crypto_aead_aes256gcm_keygen();
+        if (function_exists("sodium_crypto_secretbox")) {
+            $generated_key = sodium_crypto_secretbox_keygen();
+            $encryptionKeyNonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+            $passwordNonce = random_bytes(SODIUM_CRYPTO_PWHASH_SALTBYTES);
+
             $keyDerivedFromPassword = sodium_crypto_pwhash(
-                32,
+                SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
                 $plaintextPassword,
                 $passwordNonce,
                 SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE,
                 SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE,
                 SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13
             );
-            $encryptedEncryptionKey = sodium_crypto_aead_aes256gcm_encrypt($generated_key, null, $encryptionKeyNonce, $keyDerivedFromPassword);
+            $encryptedEncryptionKey = sodium_crypto_secretbox($generated_key, $encryptionKeyNonce, $keyDerivedFromPassword);
 
         } else {
             if (!function_exists("openssl_get_cipher_methods")){
@@ -64,26 +65,32 @@ class Encryption {
                 $encryptionKeyNonce,
             );
         }
-        return [$passwordNonce, $encryptionKeyNonce, $encryptedEncryptionKey];
+        return [
+            sodium_bin2hex($passwordNonce),
+            sodium_bin2hex($encryptionKeyNonce),
+            sodium_bin2hex($encryptedEncryptionKey)
+        ];
     }
 
+    /**
+     * @throws EncryptionNotAvailableException
+     * @throws SodiumException
+     */
     public function decryptEncryptionKey(User $user, string $plaintextPassword) {
-        if (sodium_crypto_aead_aes256gcm_is_available()) {
+        if (function_exists("sodium_crypto_secretbox")) {
 
             $keyDerivedFromPassword = sodium_crypto_pwhash(
-                32,
+                SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
                 $plaintextPassword,
-                $user->getPasswordNonce(),
+                sodium_hex2bin($user->getPasswordNonce()),
                 SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE,
                 SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE,
                 SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13
             );
 
-
-            $decryptedEncryptionKey = sodium_crypto_aead_aes256gcm_decrypt(
-                $user->getEncryptedEncryptionKey(),
-                null,
-                $user->getEncryptionKeyNonce(),
+            $decryptedEncryptionKey = sodium_crypto_secretbox_open(
+                sodium_hex2bin($user->getEncryptedEncryptionKey()),
+                sodium_hex2bin($user->getEncryptionKeyNonce()),
                 $keyDerivedFromPassword
             );
 
@@ -93,7 +100,7 @@ class Encryption {
             }
             $availableCiphers = openssl_get_cipher_methods();
             if (!in_array(self::OPENSSL_CIPHER, $availableCiphers)) {
-                throw new EncryptionNotAvailableException("Openssl can't use aes-256-gcm");
+                throw new EncryptionNotAvailableException("Openssl can't use aes-256-cbc");
             }
 
 
@@ -116,10 +123,17 @@ class Encryption {
         return $decryptedEncryptionKey;
     }
 
-    public function decrypt(Paste $paste, string $decryptedEncryptionKey)
-    {
-        if (sodium_crypto_aead_aes256gcm_is_available()) {
-            $decryptedContent = \sodium_crypto_aead_aes256gcm_decrypt($paste->getContent(), null, $paste->getNonce(), $decryptedEncryptionKey);
+    /**
+     * @throws EncryptionNotAvailableException
+     * @throws SodiumException
+     * @throws Exception
+     */
+    public function encrypt(Paste $paste, string $decryptedEncryptionKey) : Paste {
+        if (function_exists("sodium_crypto_secretbox")) {
+            $pasteNonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+            $paste->setNonce(sodium_bin2hex($pasteNonce));
+            $encryptedContent = sodium_crypto_secretbox($paste->getContent(), $pasteNonce, $decryptedEncryptionKey);
+            $encryptedContent = sodium_bin2hex($encryptedContent);
         } else {
             if (!function_exists("openssl_get_cipher_methods")){
                 throw new EncryptionNotAvailableException("Can't use openssl");
@@ -127,35 +141,7 @@ class Encryption {
 
             $availableCiphers = openssl_get_cipher_methods();
             if (!in_array(self::OPENSSL_CIPHER, $availableCiphers)) {
-                throw new EncryptionNotAvailableException("Openssl can't use aes-256-gcm");
-            }
-
-            $decryptedContent = openssl_decrypt(
-                $paste->getContent(),
-                self::OPENSSL_CIPHER,
-                $decryptedEncryptionKey,
-                0,
-                $paste->getNonce()
-            );
-
-        }
-
-        return $decryptedContent;
-    }
-
-    public function encrypt(Paste $paste, string $decryptedEncryptionKey) : Paste {
-        if (sodium_crypto_aead_aes256gcm_is_available()) {
-            $pasteNonce = random_bytes(\SODIUM_CRYPTO_AEAD_AES256GCM_NPUBBYTES );
-            $paste->setNonce($pasteNonce);
-            $encryptedContent = \sodium_crypto_aead_aes256gcm_encrypt($paste->getContent(), null, $pasteNonce, $decryptedEncryptionKey);
-        } else {
-            if (!function_exists("openssl_get_cipher_methods")){
-                throw new EncryptionNotAvailableException("Can't use openssl");
-            }
-
-            $availableCiphers = openssl_get_cipher_methods();
-            if (!in_array("aes-256-gcm", $availableCiphers)) {
-                throw new EncryptionNotAvailableException("Openssl can't use aes-256-gcm");
+                throw new EncryptionNotAvailableException("Openssl can't use aes-256-cbc");
             }
 
             $iv_len = openssl_cipher_iv_length(self::OPENSSL_CIPHER);
@@ -175,4 +161,37 @@ class Encryption {
         $paste->setContent($encryptedContent);
         return $paste;
     }
+
+
+    public function decrypt(Paste $paste, string $decryptedEncryptionKey)
+    {
+        if (function_exists("sodium_crypto_secretbox")) {
+            $decryptedContent = sodium_crypto_secretbox_open(
+                sodium_hex2bin($paste->getContent()),
+                sodium_hex2bin($paste->getNonce()),
+                $decryptedEncryptionKey
+            );
+        } else {
+            if (!function_exists("openssl_get_cipher_methods")){
+                throw new EncryptionNotAvailableException("Can't use openssl");
+            }
+
+            $availableCiphers = openssl_get_cipher_methods();
+            if (!in_array(self::OPENSSL_CIPHER, $availableCiphers)) {
+                throw new EncryptionNotAvailableException("Openssl can't use aes-256-cbc");
+            }
+
+            $decryptedContent = openssl_decrypt(
+                $paste->getContent(),
+                self::OPENSSL_CIPHER,
+                $decryptedEncryptionKey,
+                0,
+                $paste->getNonce()
+            );
+
+        }
+
+        return $decryptedContent;
+    }
+
 }
