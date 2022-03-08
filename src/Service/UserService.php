@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\User;
+use App\Exception\EncryptionNotAvailableException;
 use App\Exception\UserCreationFailedException;
 use App\Repository\UserRepository;
 use Doctrine\ORM\OptimisticLockException;
@@ -25,10 +26,11 @@ class UserService {
      * @throws SodiumException
      * @throws UserCreationFailedException
      * @throws ORMException
+     * @throws EncryptionNotAvailableException
+     * @throws \Exception
      */
     public function createUser(string $username, string $plaintextPassword)
     {
-
         if (\sodium_crypto_aead_aes256gcm_is_available()) {
             $encryptionKeyNonce = \random_bytes(\SODIUM_CRYPTO_AEAD_AES256GCM_NPUBBYTES);
             $passwordNonce = \random_bytes(\SODIUM_CRYPTO_PWHASH_SALTBYTES);
@@ -44,7 +46,37 @@ class UserService {
             $encryptedEncryptionKey = \sodium_crypto_aead_aes256gcm_encrypt($generated_key, null, $encryptionKeyNonce, $keyDerivedFromPassword);
 
         } else {
-            dd(openssl_get_cipher_methods());
+            if (!function_exists("openssl_get_cipher_methods")){
+                throw new EncryptionNotAvailableException("Can't use openssl");
+            }
+            $availableCiphers = openssl_get_cipher_methods();
+            if (!in_array("aes-256-gcm", $availableCiphers)) {
+                throw new EncryptionNotAvailableException("Openssl can't use aes-256-gcm");
+            }
+            $cipher_algo = "aes-256-gcm";
+            $digest = "sha512";
+
+            $passwordNonce = random_bytes(12);
+            $generated_key = random_bytes(32);
+
+            $keyDerivedFromPassword = openssl_pbkdf2(
+                $plaintextPassword,
+                $passwordNonce,
+                32,
+                10000,
+                $digest
+            );
+
+            $iv_len = openssl_cipher_iv_length($cipher_algo);
+            $encryptionKeyNonce = random_bytes($iv_len);
+
+            openssl_encrypt(
+                $keyDerivedFromPassword,
+                $cipher_algo,
+                $generated_key,
+                0,
+                $encryptionKeyNonce,
+            );
         }
 
 

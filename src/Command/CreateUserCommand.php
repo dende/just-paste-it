@@ -6,6 +6,7 @@ use App\Entity\Paste;
 use App\Entity\User;
 use App\Repository\PasteRepository;
 use App\Repository\UserRepository;
+use App\Service\UserService;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -24,6 +25,14 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 )]
 class CreateUserCommand extends Command
 {
+    private UserService $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+
+        parent::__construct();
+    }
 
     protected function configure(): void
     {
@@ -43,6 +52,7 @@ class CreateUserCommand extends Command
 
         $plaintextPassword = $helper->ask($input, $output, $question);
 
+        $this->userService->createUser($username, $plaintextPassword);
 
         return Command::SUCCESS;
     }
