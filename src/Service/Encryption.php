@@ -10,7 +10,7 @@ use SodiumException;
 
 class Encryption {
 
-    const OPENSSL_CIPHER = "aes-256-gcm";
+    const OPENSSL_CIPHER = "aes-256-cbc";
     const OPENSSL_DIGEST = "sha512";
 
     /**
@@ -38,8 +38,8 @@ class Encryption {
                 throw new EncryptionNotAvailableException("Can't use openssl");
             }
             $availableCiphers = openssl_get_cipher_methods();
-            if (!in_array("aes-256-gcm", $availableCiphers)) {
-                throw new EncryptionNotAvailableException("Openssl can't use aes-256-gcm");
+            if (!in_array(self::OPENSSL_CIPHER, $availableCiphers)) {
+                throw new EncryptionNotAvailableException("Openssl can't use aes-256-cbc");
             }
 
             $passwordNonce = random_bytes(12);
@@ -92,7 +92,7 @@ class Encryption {
                 throw new EncryptionNotAvailableException("Can't use openssl");
             }
             $availableCiphers = openssl_get_cipher_methods();
-            if (!in_array("aes-256-gcm", $availableCiphers)) {
+            if (!in_array(self::OPENSSL_CIPHER, $availableCiphers)) {
                 throw new EncryptionNotAvailableException("Openssl can't use aes-256-gcm");
             }
 
@@ -126,7 +126,7 @@ class Encryption {
             }
 
             $availableCiphers = openssl_get_cipher_methods();
-            if (!in_array("aes-256-gcm", $availableCiphers)) {
+            if (!in_array(self::OPENSSL_CIPHER, $availableCiphers)) {
                 throw new EncryptionNotAvailableException("Openssl can't use aes-256-gcm");
             }
 
