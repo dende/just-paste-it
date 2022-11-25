@@ -10,6 +10,8 @@ use Doctrine\ORM\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
+ * @extends ServiceEntityRepository<Paste>
+ *
  * @method Paste|null find($id, $lockMode = null, $lockVersion = null)
  * @method Paste|null findOneBy(array $criteria, array $orderBy = null)
  * @method Paste[]    findAll()

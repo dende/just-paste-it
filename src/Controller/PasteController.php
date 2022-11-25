@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\PasteRepository;
 use App\Service\Encryption;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,10 +42,17 @@ class PasteController extends AbstractController
     }
 
     #[Route('/', name: 'paste.store', methods: ['POST'])]
-    public function store(Request $request, #[CurrentUser] ?User $user, PasteRepository $pasteRepository, EntityManagerInterface $entityManager): Response
+    public function store(Request $request, #[CurrentUser] ?User $user, PasteRepository $pasteRepository, EntityManagerInterface $entityManager, LoggerInterface $logger): Response
     {
+        $session = $request->getSession();
+        $decryptedEncryptionKey = $session->get('decryptedEncryptionKey');
+
+        $paste = new Paste();
+
+
         $content = $request->request->get('content');
         $url = $request->request->get('url');
+
         if (empty($content)) {
             if (!empty($url)) {
                 return $this->redirectToRoute("paste.show", ['url' => $url]);
@@ -53,19 +61,27 @@ class PasteController extends AbstractController
         }
 
         if ($url) {
-            $paste = $pasteRepository->findByUrl($url);
-            if ($paste) {
+            $existingPaste = $pasteRepository->findByUrl($url);
+            if ($existingPaste) {
                 $url = $pasteRepository->getRandomUrl();
             }
         } else {
             $url = $pasteRepository->getRandomUrl();
         }
 
-        $session = $request->getSession();
-        $decryptedEncryptionKey = $session->get('decryptedEncryptionKey');
+        try {
+            $TTL = \DateInterval::createFromDateString("nogger");
+        } catch (\ErrorException) {
+            $logger->emergency("some idiot tried to submit nogger as a datetimeinterval");
+        }
 
 
-        $paste = new Paste();
+        try {
+            $TTL = \DateInterval::createFromDateString($request->request->get('TTL'));
+            $paste->setTTL($TTL);
+        } catch (\ErrorException) {
+            $logger->warning("some idiot tried to submit {$request->request->get('TTL')} as a datetimeinterval");
+        }
         $paste->setUrl($url);
         $paste->setContent($content);
         $paste = $this->encryption->encrypt($paste, $decryptedEncryptionKey);
@@ -93,9 +109,15 @@ class PasteController extends AbstractController
         $decryptedEncryptionKey = $session->get('decryptedEncryptionKey');
         $decryptedContent = $this->encryption->decrypt($paste, $decryptedEncryptionKey);
         $paste->setContent($decryptedContent);
+
+        $created = \DateTimeImmutable::createFromMutable($paste->getCreated());
+
+        $then = $created->add($paste->getTTL());
+
         return $this->render('paste/show.html.twig',
             [
-                "paste" => $paste
+                "paste" => $paste,
+                "then" => $then
             ]);
 
     }

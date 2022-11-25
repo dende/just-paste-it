@@ -5,17 +5,17 @@
 {% block body %}
     <link rel="stylesheet" href="/style.css">
     <h1><a href="/">Neue Paste erstellen</a></h1>
+    <form action="/logout">
+        <input type="submit" value="logout" />
+    </form>
+
     <h2>Pastierung:</h2>
     <form>
-
-        <label for="url">URL:</label><br>
-        <input id="url" name="url" type="text" value="{{ app.request.getBaseURL() }}/{{ paste.url }}"/>
+        <label for="url">URL:</label><input id="url" name="url" type="text" value="{{ app.request.getBaseURL() }}/{{ paste.url }}"/><br>
+        <span>Die Paste wurde am {{ paste.created.format("d.m.Y.") }} um {{ paste.created.format("H:i") }} Uhr erstellt und wird nach dem {{ then.format("d.m.Y") }} um {{ then.format("H:i")}} Uhr gelöscht</span><br><br>
         <label for="content">Pastierungsinhalt:</label><br>
         <textarea placeholder="Paste bitte hier hinein" id="content" name="content" class="ui-autocomplete-input"
                   autocomplete="off" role="textbox" aria-autocomplete="list" aria-haspopup="true">{{ paste.content }}</textarea><br>
     </form>
-
-    <form action="/logout">
-        <input type="submit" value="logout" />
-    </form>
+{# todo: löschen anbieten #}
 {% endblock %}

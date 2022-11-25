@@ -3,44 +3,42 @@
 namespace App\Entity;
 
 use App\Repository\PasteRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity(repositoryClass=PasteRepository::class)
- */
+#[ORM\Entity(repositoryClass: PasteRepository::class)]
 class Paste
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: "integer")]
+    private ?int $id = null;
 
-    /**
-     * @ORM\Column(type="string", length=255, unique=true)
-     */
+    #[ORM\Column(type: "string", length: 255)]
     private $url;
 
-    /**
-     * @ORM\Column(type="text")
-     */
+    #[ORM\Column(type: "text")]
     private $content;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="pastes")
-     * @ORM\JoinColumn(nullable=false)
-     */
+    #[ORM\Column(type: "dateinterval", options: ["default" => "2 weeks"])]
+    private \DateInterval $TTL;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, options: ["default" => "now"])]
+    private \DateTimeInterface $created;
+
+    public function __construct()
+    {
+        $this->setCreated(new \DateTime());
+    }
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: "pastes")]
+    #[ORM\JoinColumn(nullable: false)]
     private $user;
 
-    /**
-     * @ORM\Column(type="string", length=20)
-     */
+    #[ORM\Column(type: "string", length: 20)]
     private $nonce;
 
-    /**
-     * @ORM\Column(type="boolean")
-     */
+    #[ORM\Column(type: "boolean")]
     private $public;
 
     public function getId(): ?int
@@ -68,6 +66,30 @@ class Paste
     public function setContent(string $content): self
     {
         $this->content = $content;
+
+        return $this;
+    }
+
+    public function getTTL(): \DateInterval
+    {
+        return $this->TTL;
+    }
+
+    public function setTTL(\DateInterval $TTL): self
+    {
+        $this->TTL = $TTL;
+
+        return $this;
+    }
+
+    public function getCreated(): ?\DateTimeInterface
+    {
+        return $this->created;
+    }
+
+    public function setCreated(\DateTimeInterface $created): self
+    {
+        $this->created = $created;
 
         return $this;
     }
