@@ -29,3 +29,6 @@ security:
                 path: logout
                 target: /
                 invalidate_session: true
+    access_control:
+        # allow unauthenticated users to access the login form
+        - { path: ^/register, roles: PUBLIC_ACCESS }

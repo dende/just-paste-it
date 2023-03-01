@@ -19,6 +19,8 @@
                 <input type="text" id="username" name="_username" value="{{ last_username }}"/>
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="_password"/>
+                <label for="password">Repeat Password:</label>
+                <input type="password" id="password" name="_password_repeat"/>
                 <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
                 <button type="submit">login</button>
             </form>

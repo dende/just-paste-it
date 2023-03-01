@@ -26,6 +26,29 @@ class LoginController extends AbstractController
     {
         return null;
     }
+
+    #[Route('/register', name: 'register')]
+    public function showRegistration(Request $request): Response
+    {
+        $error = null;
+        $lastUsername = null;
+        return $this->render('register/index.html.twig', [
+            'last_username' => $lastUsername,
+            'error'         => $error,
+        ]);
+    }
+
+    #[Route('/register', name: 'register')]
+    public function performRegistration(Request $request): Response
+    {
+        $error = null;
+        $lastUsername = null;
+        return $this->render('register/index.html.twig', [
+            'last_username' => $lastUsername,
+            'error'         => $error,
+        ]);
+    }
+
 }
 
 

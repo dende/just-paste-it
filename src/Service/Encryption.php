@@ -11,9 +11,6 @@ use SodiumException;
 class Encryption
 {
 
-    const OPENSSL_CIPHER = "aes-256-cbc";
-    const OPENSSL_DIGEST = "sha512";
-
     /**
      * @throws EncryptionNotAvailableException
      * @throws SodiumException
