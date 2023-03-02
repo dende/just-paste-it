@@ -6,12 +6,14 @@
     <link rel="stylesheet" href="/style.css">
 
     <h1>Hallo {{ user.username }} </h1>
+    <h1><a href="{{ url("paste.index") }}">Alle Pastierungen anzeigen</a></h1>
+
     <form action="/logout">
         <input type="submit" value="logout" />
     </form>
 
     <h2>Neue Pastierung erstellen</h2>
-    <form action="{{ path('paste.store') }}" method="post">
+    <form action="{{ path('paste.store') }}" enctype="multipart/form-data" method="post">
         <label for="url">Gewünschte URL:</label>
         <input id="url" name="url" type="text" placeholder="Wunsch-URL der Pasta"/><br>
         <label><abbr title="Time To Live (Nach Ablauf der TTL wird die Paste gelöscht)">TTL:</abbr></label>
@@ -27,6 +29,8 @@
         <br>
         <textarea placeholder="Paste bitte hier hinein" id="content" name="content" class="ui-autocomplete-input"
                   autocomplete="off" role="textbox" aria-autocomplete="list" aria-haspopup="true"></textarea><br>
+        <input name="files[]" type="file" multiple><br>
+
         <button type="submit">Ab dafür</button>
     </form>
 

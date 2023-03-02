@@ -4,7 +4,9 @@
 
 {% block body %}
     <link rel="stylesheet" href="/style.css">
-    <h1><a href="/">Neue Paste erstellen</a></h1>
+    <h1>Hallo {{ paste.user.username }} </h1>
+
+    <h1><a href="{{ url("paste.index") }}">Alle Pastierungen anzeigen</a></h1>
     <form action="/logout">
         <input type="submit" value="logout" />
     </form>
@@ -17,5 +19,10 @@
         <textarea placeholder="Paste bitte hier hinein" id="content" name="content" class="ui-autocomplete-input"
                   autocomplete="off" role="textbox" aria-autocomplete="list" aria-haspopup="true">{{ paste.content }}</textarea><br>
     </form>
+    <ul>
+        {% for attachment in attachments %}
+            <li><a href="{{ url("paste.attachment.download", {url: paste.url, attachmentId: attachment.id}) }}">{{ attachment.filename }}</a></li>
+        {% endfor %}
+    </ul>
 {# todo: löschen anbieten #}
 {% endblock %}

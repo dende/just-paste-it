@@ -2,11 +2,13 @@
 
 namespace App\Service;
 
+use App\Entity\Attachment;
 use App\Entity\Paste;
 use App\Entity\User;
 use App\Exception\EncryptionNotAvailableException;
 use Exception;
 use SodiumException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class Encryption
 {
@@ -73,7 +75,7 @@ class Encryption
      * @throws SodiumException
      * @throws Exception
      */
-    public function encrypt(Paste $paste, string $decryptedEncryptionKey): Paste
+    public function encryptPaste(Paste $paste, string $decryptedEncryptionKey): Paste
     {
         if (!function_exists("sodium_crypto_secretbox")) {
             throw new EncryptionNotAvailableException();
@@ -92,7 +94,7 @@ class Encryption
      * @throws EncryptionNotAvailableException
      * @throws SodiumException
      */
-    public function decrypt(Paste $paste, string $decryptedEncryptionKey)
+    public function decryptPaste(Paste $paste, string $decryptedEncryptionKey)
     {
         if (!function_exists("sodium_crypto_secretbox")) {
             throw new EncryptionNotAvailableException();
@@ -104,5 +106,40 @@ class Encryption
         );
         return $decryptedContent;
     }
+
+
+    /**
+     * @throws EncryptionNotAvailableException
+     * @throws SodiumException
+     * @throws Exception
+     */
+    public function encryptFile(UploadedFile $file, Paste $paste, string $decryptedEncryptionKey): string
+    {
+        if (!function_exists("sodium_crypto_secretbox")) {
+            throw new EncryptionNotAvailableException();
+        }
+        $pasteNonce = sodium_hex2bin($paste->getNonce());
+        $encryptedContent = sodium_crypto_secretbox($file->getContent(), $pasteNonce, $decryptedEncryptionKey);
+        return $encryptedContent;
+
+    }
+
+    /**
+     * @throws EncryptionNotAvailableException
+     * @throws SodiumException
+     */
+    public function decryptFile(Attachment $attachment, Paste $paste, string $decryptedEncryptionKey)
+    {
+        if (!function_exists("sodium_crypto_secretbox")) {
+            throw new EncryptionNotAvailableException();
+        }
+        $decryptedContent = sodium_crypto_secretbox_open(
+            stream_get_contents($attachment->getContent()),
+            sodium_hex2bin($paste->getNonce()),
+            $decryptedEncryptionKey
+        );
+        return $decryptedContent;
+    }
+
 
 }

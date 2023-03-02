@@ -2,14 +2,17 @@
 
 namespace App\Controller;
 
+use App\Entity\Attachment;
 use App\Entity\Paste;
 use App\Entity\User;
+use App\Repository\AttachmentRepository;
 use App\Repository\PasteRepository;
 use App\Service\Encryption;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -29,7 +32,11 @@ class PasteController extends AbstractController
     #[Route('/', name: 'paste.index', methods: ['GET'])]
     public function index(#[CurrentUser] ?User $user): Response
     {
-        return $this->redirectToRoute('paste.create');
+
+        return $this->render(
+            'paste/index.html.twig',
+            ['user' => $user],
+        );
     }
 
     #[Route('/create', name: 'paste.create', methods: ['GET'])]
@@ -48,7 +55,6 @@ class PasteController extends AbstractController
         $decryptedEncryptionKey = $session->get('decryptedEncryptionKey');
 
         $paste = new Paste();
-
 
         $content = $request->request->get('content');
         $url = $request->request->get('url');
@@ -70,21 +76,17 @@ class PasteController extends AbstractController
         }
 
         try {
-            $TTL = \DateInterval::createFromDateString("nogger");
-        } catch (\ErrorException) {
-            $logger->emergency("some idiot tried to submit nogger as a datetimeinterval");
-        }
-
-
-        try {
             $TTL = \DateInterval::createFromDateString($request->request->get('TTL'));
             $paste->setTTL($TTL);
         } catch (\ErrorException) {
             $logger->warning("some idiot tried to submit {$request->request->get('TTL')} as a datetimeinterval");
         }
+
+
+
         $paste->setUrl($url);
         $paste->setContent($content);
-        $paste = $this->encryption->encrypt($paste, $decryptedEncryptionKey);
+        $paste = $this->encryption->encryptPaste($paste, $decryptedEncryptionKey);
 
         $paste->setUser($user);
         $paste->setPublic(false);
@@ -92,6 +94,20 @@ class PasteController extends AbstractController
         $entityManager->persist($paste);
         $entityManager->persist($user);
         // actually executes the queries (i.e. the INSERT query)
+
+        /* @var UploadedFile[] $files */
+        $files = $request->files->get('files');
+
+        foreach ($files as $file) {
+            $attachment = new Attachment();
+            $attachment->setPaste($paste);
+            $attachment->setFilename($file->getClientOriginalName());
+            $attachment->setMimetype($file->getMimeType());
+            $attachment->setContent($this->encryption->encryptFile($file, $paste, $decryptedEncryptionKey));
+            $entityManager->persist($attachment);
+            $paste->addAttachment($attachment);
+        }
+
         $entityManager->flush();
 
         return $this->redirectToRoute("paste.show", ["url" => $paste->getUrl()]);
@@ -107,8 +123,11 @@ class PasteController extends AbstractController
 
         $session = $request->getSession();
         $decryptedEncryptionKey = $session->get('decryptedEncryptionKey');
-        $decryptedContent = $this->encryption->decrypt($paste, $decryptedEncryptionKey);
+        $decryptedContent = $this->encryption->decryptPaste($paste, $decryptedEncryptionKey);
         $paste->setContent($decryptedContent);
+
+        $attachments = $paste->getAttachments();
+
 
         $created = \DateTimeImmutable::createFromMutable($paste->getCreated());
 
@@ -117,9 +136,38 @@ class PasteController extends AbstractController
         return $this->render('paste/show.html.twig',
             [
                 "paste" => $paste,
-                "then" => $then
+                "then" => $then,
+                "attachments" => $attachments
             ]);
-
     }
 
+    #[Route('/{url}/{attachmentId}', name: 'paste.attachment.download', methods: ['GET'])]
+    public function download(string $url, int $attachmentId, #[CurrentUser] ?User $user, PasteRepository $pasteRepository, AttachmentRepository $attachmentRepository, Request $request): Response
+    {
+        $paste = $pasteRepository->findByUrlAndUser($url, $user);
+        if (empty($paste)) {
+            return $this->redirectToRoute("paste.index");
+        }
+
+        $session = $request->getSession();
+        $decryptedEncryptionKey = $session->get('decryptedEncryptionKey');
+
+        $attachments = $paste->getAttachments();
+
+        foreach ($attachments as $attachment) {
+            if ($attachment->getId() == $attachmentId) {
+                $decryptedContent = $this->encryption->decryptFile($attachment, $paste, $decryptedEncryptionKey);
+                $response = new Response();
+                $response->headers->set('Content-Type', $attachment->getMimetype());
+                $response->headers->set('Content-Disposition', 'attachment;filename="'.$attachment->getFilename());
+                $response->setContent($decryptedContent);
+                return $response;
+            }
+        }
+
+        $response = new Response();
+        $response->setContent("404 Attachment not found");
+        return $response;
+
+    }
 }

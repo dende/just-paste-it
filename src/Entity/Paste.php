@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\PasteRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -29,6 +31,7 @@ class Paste
     public function __construct()
     {
         $this->setCreated(new \DateTime());
+        $this->attachments = new ArrayCollection();
     }
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: "pastes")]
@@ -40,6 +43,11 @@ class Paste
 
     #[ORM\Column(type: "boolean")]
     private $public;
+
+
+    #[ORM\OneToMany(mappedBy: 'paste', targetEntity: Attachment::class, orphanRemoval: true)]
+    private $attachments;
+
 
     public function getId(): ?int
     {
@@ -128,5 +136,41 @@ class Paste
         $this->public = $public;
 
         return $this;
+    }
+
+
+    /**
+     * @return Collection<int, Attachment>
+     */
+    public function getAttachments(): Collection
+    {
+        return $this->attachments;
+    }
+
+    public function addAttachment(Attachment $attachment): self
+    {
+        if (!$this->attachments->contains($attachment)) {
+            $this->attachments[] = $attachment;
+            $attachment->setPaste($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAttachment(Attachment $attachment): self
+    {
+        if ($this->attachments->removeElement($attachment)) {
+            // set the owning side to null (unless already changed)
+            if ($attachment->getPaste() === $this) {
+                $attachment->setPaste(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function then(): \DateTimeInterface
+    {
+        return $this->getCreated()->add($this->getTTL());
     }
 }
