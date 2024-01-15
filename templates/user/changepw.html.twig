@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Passwort ändern{% endblock %}
+
+{% block body %}
+    <link rel="stylesheet" href="/style.css">
+    <h1>Hallo {{ app.user.username }} </h1>
+
+    <h1><a href="{{ url("paste.index") }}">Alle Notizen anzeigen</a></h1>
+    <form action="/logout">
+        <input type="submit" value="logout" />
+    </form>
+
+    <h2>Passwort ändern:</h2>
+    <form method="POST">
+        <label for="url">Altes Passwort:</label><input id="password" name="password" type="password" /><br>
+        <label for="url">Neues Passwort:</label><input id="new_password" name="new_password" type="password" /><br>
+        <label for="url">Neues Passwort bestätigen:</label><input id="new_password_repeat" name="new_password_repeat" type="password" /><br>
+        <button type="submit">Ändern</button>
+
+    </form>
+{% endblock %}

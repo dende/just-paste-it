@@ -1,22 +1,22 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Paste{% endblock %}
+{% block title %}Notiz{% endblock %}
 
 {% block body %}
     <link rel="stylesheet" href="/style.css">
     <h1>Hallo {{ paste.user.username }} </h1>
 
-    <h1><a href="{{ url("paste.index") }}">Alle Pastierungen anzeigen</a></h1>
+    <h1><a href="{{ url("paste.index") }}">Alle Notizen anzeigen</a></h1>
     <form action="/logout">
         <input type="submit" value="logout" />
     </form>
 
-    <h2>Pastierung:</h2>
+    <h2>Notizen:</h2>
     <form>
         <label for="url">URL:</label><input id="url" name="url" type="text" value="{{ app.request.getBaseURL() }}/{{ paste.url }}"/><br>
-        <span>Die Paste wurde am {{ paste.created.format("d.m.Y.") }} um {{ paste.created.format("H:i") }} Uhr erstellt und wird nach dem {{ then.format("d.m.Y") }} um {{ then.format("H:i")}} Uhr gelöscht</span><br><br>
-        <label for="content">Pastierungsinhalt:</label><br>
-        <textarea placeholder="Paste bitte hier hinein" id="content" name="content" class="ui-autocomplete-input"
+        <span>Die Notiz wurde am {{ paste.created.format("d.m.Y.") }} um {{ paste.created.format("H:i") }} Uhr erstellt und wird nach dem {{ then.format("d.m.Y") }} um {{ then.format("H:i")}} Uhr gelöscht</span><br><br>
+        <label for="content">Notiz:</label><br>
+        <textarea placeholder="Notiz bitte hier hinein" id="content" name="content" class="ui-autocomplete-input"
                   autocomplete="off" role="textbox" aria-autocomplete="list" aria-haspopup="true">{{ paste.content }}</textarea><br>
     </form>
     <ul>
@@ -24,5 +24,7 @@
             <li><a href="{{ url("paste.attachment.download", {url: paste.url, attachmentId: attachment.id}) }}">{{ attachment.filename }}</a></li>
         {% endfor %}
     </ul>
-{# todo: löschen anbieten #}
+    <form action="/delete/{{ paste.url }}">
+        <input type="submit" value="löschen" />
+    </form>
 {% endblock %}

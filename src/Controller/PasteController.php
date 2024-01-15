@@ -60,14 +60,11 @@ class PasteController extends AbstractController
         $url = $request->request->get('url');
 
         if (empty($content)) {
-            if (!empty($url)) {
-                return $this->redirectToRoute("paste.show", ['url' => $url]);
-            }
-            return $this->redirectToRoute("paste.index");
+            $content = "";
         }
 
         if ($url) {
-            $existingPaste = $pasteRepository->findByUrl($url);
+            $existingPaste = $pasteRepository->findByUrlAndUser($url, $user);
             if ($existingPaste) {
                 $url = $pasteRepository->getRandomUrl();
             }
@@ -79,9 +76,8 @@ class PasteController extends AbstractController
             $TTL = \DateInterval::createFromDateString($request->request->get('TTL'));
             $paste->setTTL($TTL);
         } catch (\ErrorException) {
-            $logger->warning("some idiot tried to submit {$request->request->get('TTL')} as a datetimeinterval");
+            $logger->warning("someone tried to submit {$request->request->get('TTL')} as a datetimeinterval");
         }
-
 
 
         $paste->setUrl($url);
@@ -141,6 +137,22 @@ class PasteController extends AbstractController
             ]);
     }
 
+    #[Route('/delete/{url}', name: 'paste.delete', methods: ['GET'])]
+    public function delete(string $url, #[CurrentUser] ?User $user, PasteRepository $pasteRepository, EntityManagerInterface $entityManager, Request $request): Response
+    {
+        $paste = $pasteRepository->findByUrlAndUser($url, $user);
+        if (empty($paste)) {
+            return $this->redirectToRoute("paste.index");
+        }
+
+
+        $entityManager->remove($paste);
+        $entityManager->flush();
+
+        return $this->redirectToRoute("paste.index");
+    }
+
+
     #[Route('/{url}/{attachmentId}', name: 'paste.attachment.download', methods: ['GET'])]
     public function download(string $url, int $attachmentId, #[CurrentUser] ?User $user, PasteRepository $pasteRepository, AttachmentRepository $attachmentRepository, Request $request): Response
     {
@@ -159,7 +171,7 @@ class PasteController extends AbstractController
                 $decryptedContent = $this->encryption->decryptFile($attachment, $paste, $decryptedEncryptionKey);
                 $response = new Response();
                 $response->headers->set('Content-Type', $attachment->getMimetype());
-                $response->headers->set('Content-Disposition', 'attachment;filename="'.$attachment->getFilename());
+                $response->headers->set('Content-Disposition', 'attachment;filename="' . $attachment->getFilename());
                 $response->setContent($decryptedContent);
                 return $response;
             }
@@ -170,4 +182,5 @@ class PasteController extends AbstractController
         return $response;
 
     }
+
 }

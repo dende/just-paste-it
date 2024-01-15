@@ -55,4 +55,41 @@ class UserService {
         }
 
     }
+
+    public function changePassword(User $user, string $old_password, string $new_password, string $new_password_repeat)
+    {
+
+        if (!$this->passwordHasher->isPasswordValid(
+            $user,
+            $old_password
+        )){
+            return "old pw is wrong";
+            // todo passwords dont match
+        }
+
+        if ($new_password_repeat != $new_password) {
+            return "new pws dont match";
+            // todo new passwords dont match
+        }
+
+        $user->setPassword($this->passwordHasher->hashPassword($user, $new_password));
+
+
+        $encryptedEncryptionKey = $this->encryption->reEncryptEncryptionKey($user, $old_password, $new_password);
+
+        $user->setEncryptedEncryptionKey($encryptedEncryptionKey);
+
+
+
+
+        try {
+            $this->userRepository->add($user);
+        } catch (OptimisticLockException $e) {
+            throw new UserCreationFailedException();
+        }
+
+        return true;
+
+    }
+
 }

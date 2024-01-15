@@ -1,14 +1,16 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Neue Pastierung erstellen{% endblock %}
+{% block title %}Neue Notiz erstellen{% endblock %}
 
 {% block body %}
-    <h1>Hallo {{ user.username }} </h1>
+    <h1 style="">Hallo {{ user.username }} </h1>
+    <h3 style=""><a href="{{ url("logout") }}">abmelden</a></h3><br>
+    <h3 style=""><a href="{{ url("show_change_password") }}">Passwort ändern</a></h3><br>
 
     <link rel="stylesheet" href="/style.css">
-    <h1><a href="{{ url("paste.create") }}">Neue Paste erstellen</a></h1>
+    <h1><a href="{{ url("paste.create") }}">Neue Notiz erstellen</a></h1>
 
-    <h2>Liste aller Pastierungen</h2>
+    <h2>Liste aller Notizen</h2>
     <table>
         <thead>
         <tr>

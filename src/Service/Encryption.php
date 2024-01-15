@@ -141,5 +141,25 @@ class Encryption
         return $decryptedContent;
     }
 
+    public function reEncryptEncryptionKey(User $user, string $old_password, string $new_password)
+    {
+        $decryptedEncryptionKey = $this->decryptEncryptionKey($user, $old_password);
+
+        $encryptionKeyNonce = sodium_hex2bin($user->getEncryptionKeyNonce());
+        $passwordNonce = sodium_hex2bin($user->getPasswordNonce());
+
+        $keyDerivedFromPassword = sodium_crypto_pwhash(
+            SODIUM_CRYPTO_SECRETBOX_KEYBYTES,
+            $new_password,
+            $passwordNonce,
+            SODIUM_CRYPTO_PWHASH_OPSLIMIT_MODERATE,
+            SODIUM_CRYPTO_PWHASH_MEMLIMIT_MODERATE,
+            SODIUM_CRYPTO_PWHASH_ALG_ARGON2ID13
+        );
+        $encryptedEncryptionKey = sodium_crypto_secretbox($decryptedEncryptionKey, $encryptionKeyNonce, $keyDerivedFromPassword);
+
+        return sodium_bin2hex($encryptedEncryptionKey);
+    }
+
 
 }
