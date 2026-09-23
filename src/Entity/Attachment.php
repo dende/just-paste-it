@@ -19,7 +19,7 @@ class Attachment
     #[ORM\Column(type: 'string', length: 255)]
     private $mimetype;
 
-    #[ORM\ManyToOne(targetEntity: paste::class, inversedBy: 'attachments')]
+    #[ORM\ManyToOne(targetEntity: Paste::class, inversedBy: 'attachments')]
     #[ORM\JoinColumn(nullable: false)]
     private $paste;
 
@@ -55,12 +55,12 @@ class Attachment
         return $this;
     }
 
-    public function getPaste(): ?paste
+    public function getPaste(): ?Paste
     {
         return $this->paste;
     }
 
-    public function setPaste(?paste $paste): self
+    public function setPaste(?Paste $paste): self
     {
         $this->paste = $paste;
 

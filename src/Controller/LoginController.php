@@ -6,11 +6,13 @@ use App\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class LoginController extends AbstractController
 {
+
+    private UserService $userService;
 
     public function __construct(UserService $userService)
     {
@@ -44,9 +46,9 @@ class LoginController extends AbstractController
     #[Route('/changepw', name: 'change_password', methods: ['POST'])]
     public function do_changepw(AuthenticationUtils $authenticationUtils, Request $request): ?Response
     {
-        $old_password = $request->get("password");
-        $new_password = $request->get("new_password");
-        $new_password_repeat = $request->get("new_password_repeat");
+        $old_password = $request->request->get("password");
+        $new_password = $request->request->get("new_password");
+        $new_password_repeat = $request->request->get("new_password_repeat");
 
         $user = $this->getUser();
         $retval = $this->userService->changePassword($user, $old_password, $new_password, $new_password_repeat);

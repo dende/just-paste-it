@@ -30,7 +30,7 @@ class LoginSubscriber implements EventSubscriberInterface
     {
         /** @var User $user */
         $user = $event->getUser();
-        $plaintextPassword = $event->getRequest()->get('_password');
+        $plaintextPassword = $event->getRequest()->request->get('_password');
 
         $decryptedEncryptionKey = $this->encryption->decryptEncryptionkey($user, $plaintextPassword);
 

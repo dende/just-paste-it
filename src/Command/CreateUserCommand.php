@@ -8,7 +8,7 @@ use App\Repository\PasteRepository;
 use App\Repository\UserRepository;
 use App\Service\UserService;
 use Doctrine\ORM\OptimisticLockException;
-use Doctrine\ORM\ORMException;
+use Doctrine\ORM\Exception\ORMException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

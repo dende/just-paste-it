@@ -134,7 +134,7 @@ class Encryption
             throw new EncryptionNotAvailableException();
         }
         $decryptedContent = sodium_crypto_secretbox_open(
-            stream_get_contents($attachment->getContent()),
+            is_resource($attachment->getContent()) ? stream_get_contents($attachment->getContent()) : $attachment->getContent(),
             sodium_hex2bin($paste->getNonce()),
             $decryptedEncryptionKey
         );

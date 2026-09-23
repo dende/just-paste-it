@@ -1,27 +1,6 @@
 {
-    "composer/package-versions-deprecated": {
-        "version": "1.11.99.2"
-    },
-    "doctrine/annotations": {
-        "version": "1.0",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "master",
-            "version": "1.0",
-            "ref": "a2759dd6123694c8d901d0ec80006e044c2e6457"
-        },
-        "files": [
-            "./config/routes/annotations.yaml"
-        ]
-    },
-    "doctrine/cache": {
-        "version": "2.1.1"
-    },
     "doctrine/collections": {
         "version": "1.6.8"
-    },
-    "doctrine/common": {
-        "version": "3.1.2"
     },
     "doctrine/dbal": {
         "version": "2.13.2"
@@ -85,12 +64,6 @@
     "egulias/email-validator": {
         "version": "3.1.1"
     },
-    "friendsofphp/proxy-manager-lts": {
-        "version": "v1.0.5"
-    },
-    "laminas/laminas-code": {
-        "version": "4.4.2"
-    },
     "monolog/monolog": {
         "version": "2.3.2"
     },
@@ -114,9 +87,6 @@
     },
     "phpdocumentor/type-resolver": {
         "version": "1.4.0"
-    },
-    "phpspec/prophecy": {
-        "version": "1.13.0"
     },
     "phpunit/php-code-coverage": {
         "version": "9.2.6"
@@ -165,12 +135,6 @@
     "sebastian/cli-parser": {
         "version": "1.0.1"
     },
-    "sebastian/code-unit": {
-        "version": "1.0.8"
-    },
-    "sebastian/code-unit-reverse-lookup": {
-        "version": "2.0.3"
-    },
     "sebastian/comparator": {
         "version": "4.0.6"
     },
@@ -201,26 +165,11 @@
     "sebastian/recursion-context": {
         "version": "4.0.4"
     },
-    "sebastian/resource-operations": {
-        "version": "3.0.3"
-    },
     "sebastian/type": {
         "version": "2.3.4"
     },
     "sebastian/version": {
         "version": "3.0.2"
-    },
-    "sensio/framework-extra-bundle": {
-        "version": "5.2",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "master",
-            "version": "5.2",
-            "ref": "fb7e19da7f013d0d422fa9bce16f5c510e27609b"
-        },
-        "files": [
-            "./config/packages/sensio_framework_extra.yaml"
-        ]
     },
     "symfony/asset": {
         "version": "v5.3.4"
@@ -436,12 +385,6 @@
     "symfony/polyfill-mbstring": {
         "version": "v1.23.1"
     },
-    "symfony/polyfill-php80": {
-        "version": "v1.23.1"
-    },
-    "symfony/polyfill-php81": {
-        "version": "v1.23.0"
-    },
     "symfony/process": {
         "version": "v5.3.4"
     },
@@ -449,9 +392,6 @@
         "version": "v5.3.4"
     },
     "symfony/property-info": {
-        "version": "v5.3.4"
-    },
-    "symfony/proxy-manager-bridge": {
         "version": "v5.3.4"
     },
     "symfony/routing": {

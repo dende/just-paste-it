@@ -1,8 +1,12 @@
-version: '2'
 services:
   just-paste-it:
     build: docker
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    working_dir: /var/www
+    environment:
+      COMPOSER_HOME: /tmp/composer
     volumes:
-      - ./:/var/www/
+      - ./:/var/www
     ports:
-      - "80:80"
+      - "127.0.0.1:${HTTP_PORT:-8080}:80"
+    init: true
