@@ -6,9 +6,12 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
-COPY php.ini /usr/local/etc/php/conf.d/development.ini
+COPY docker/php.ini /usr/local/etc/php/conf.d/development.ini
 
 WORKDIR /var/www
+
+COPY . .
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer install --no-interaction --prefer-dist --no-progress --no-scripts
 
 EXPOSE 80
 

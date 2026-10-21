@@ -3,13 +3,13 @@
 Entwicklungsumgebung für Symfony 8.1, PHP 8.4 und SQLite. Sie baut auf dem
 vorhandenen Service `just-paste-it` und dem Dockerfile in `docker/` auf.
 PHP und Composer müssen auf dem Host nicht installiert sein. Benötigt werden
-Docker mit laufendem Daemon und Docker Compose.
+Docker mit laufendem Daemon und Docker Compose ab Version 2.24.
 
 ## Start
 
 ```sh
 docker compose build
-docker compose run --rm just-paste-it composer install
+mkdir -p var
 docker compose run --rm just-paste-it php bin/console doctrine:migrations:migrate --no-interaction
 docker compose up -d
 docker compose exec just-paste-it php bin/console app:create-user
@@ -18,13 +18,19 @@ docker compose exec just-paste-it php bin/console app:create-user
 Danach unter http://localhost:8080/login mit dem angelegten Benutzer anmelden.
 Der Benutzername und das Passwort werden interaktiv abgefragt.
 
-Der Quellcode ist als Bind-Mount eingebunden; Änderungen sind sofort sichtbar.
+Quellcode und Composer-Abhängigkeiten liegen im Image. Beim Build installiert
+Composer die Versionen aus `composer.lock`, einschließlich der Entwicklungswerkzeuge.
+`vendor/` ist weder in Git noch im Docker-Build-Kontext enthalten.
+Composer-Skripte werden beim Build übersprungen, damit keine lokale Konfiguration
+oder Datenbank benötigt wird. Den Symfony-Cache erstellt die Anwendung zur Laufzeit.
 SQLite liegt unter `var/data.db` auf dem Host und bleibt beim Entfernen des
-Containers erhalten. Auch `vendor/` und `var/` liegen im Projektverzeichnis.
+Containers erhalten. Nur `var/` wird als beschreibbarer Ordner eingebunden.
 Der PHP-Entwicklungsserver ist ausschließlich für die lokale Entwicklung gedacht.
 
-Die eingecheckte `.env` enthält lokale Standardwerte. Eigene Symfony-Einstellungen
-(z. B. `APP_SECRET` und `DATABASE_URL`) gehören in die ignorierte `.env.local`.
+Die `.env` enthält lokale Standardwerte und wird ins Image kopiert; dort keine
+Geheimnisse hinterlegen. Eigene Symfony-Einstellungen (z. B. `APP_SECRET` und
+`DATABASE_URL`) gehören in die ignorierte `.env.local`. Compose übergibt diese
+optional als Umgebungsvariablen; die Datei wird nicht ins Image kopiert.
 Für ein Deployment einen eigenen zufälligen `APP_SECRET` setzen.
 
 Compose verwendet standardmäßig UID/GID 1000 und Port 8080. Falls nötig vor den
@@ -36,10 +42,20 @@ export LOCAL_UID="$(id -u)" LOCAL_GID="$(id -g)" HTTP_PORT=8081
 
 ## Entwicklung und Tests
 
+Nach Änderungen am Quellcode oder an `composer.lock` das Image neu bauen und
+den Container ersetzen:
+
+```sh
+docker compose up -d --build
+```
+
+Docker kann unveränderte Build-Schritte aus dem Cache verwenden. Für eine erneute
+Installation auch ohne Dateiänderungen `docker compose build --no-cache` ausführen.
+
 ```sh
 docker compose exec just-paste-it php bin/console cache:clear
 docker compose exec just-paste-it php bin/console app:clean-pastes
-docker compose run --rm just-paste-it php bin/phpunit
+docker compose run --rm just-paste-it php bin/phpunit --cache-directory var/phpunit
 docker compose run --rm just-paste-it php bin/console lint:container
 docker compose run --rm just-paste-it php bin/console lint:yaml config
 docker compose run --rm just-paste-it php bin/console lint:twig templates
@@ -54,8 +70,8 @@ den Passwortwechsel und das Löschen. Entwicklungsdaten werden dabei nicht benut
 ## Upgrade einer vorhandenen Installation
 
 Vor dem Upgrade die bestehende SQLite-Datei sichern und den bisherigen
-`DATABASE_URL` sowie `APP_SECRET` in `.env.local` übernehmen. Dann das Image bauen,
-`composer install` und die Migrationen wie oben ausführen. Das Format der
+`DATABASE_URL` sowie `APP_SECRET` in `.env.local` übernehmen. Dann das Image bauen und
+die Migrationen wie oben ausführen. Composer läuft bereits beim Build. Das Format der
 verschlüsselten Daten bleibt erhalten. Die Migration von Symfony 6.1 auf 8.1
 umfasst Doctrine ORM 3 / DBAL 4 und ersetzt das Sensio-Bundle durch Symfony-Attribute.
 

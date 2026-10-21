@@ -1,12 +1,17 @@
 services:
   just-paste-it:
-    build: docker
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     working_dir: /var/www
     environment:
       COMPOSER_HOME: /tmp/composer
+    env_file:
+      - path: .env.local
+        required: false
     volumes:
-      - ./:/var/www
+      - ./var:/var/www/var
     ports:
       - "127.0.0.1:${HTTP_PORT:-8080}:80"
     init: true

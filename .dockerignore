@@ -1,0 +1,14 @@
+.git
+.idea
+.agents
+.codex
+vendor
+var
+.phpunit.cache
+.phpunit.result.cache
+.env.local
+.env.local.php
+.env.*.local
+config/secrets/prod/prod.decrypt.private.php
+composer.phar
+public/bundles
